@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lmpt2 Vessel Schedule Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1b2e;--bg2:#112240;--bg3:#0a1628;
+  --accent:#00bfff;--accent2:#1e90ff;
+  --gold:#f5a623;--gold2:#ffc84a;
+  --green:#27ae60;--green2:#2ecc71;
+  --red:#e74c3c;--red2:#ff6b6b;
+  --purple:#9b59b6;--teal:#16a085;
+  --nb:rgba(255,255,255,0.08);
+  --text:#e8f0fe;--text2:#a0b4cc;--text3:#5a7a9a;
+  --card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.07);
+  --font:'Sarabun',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --r:8px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+
+/* TOP BAR */
+.top-bar{background:#1a3a6b;padding:6px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);font-size:12px;color:#b8d4ff}
+.top-bar-title{font-weight:700;font-size:13px;color:#fff}
+
+/* MAIN HEADER */
+.main-header{background:linear-gradient(135deg,#0a1628,#0d2040,#0a1628);padding:20px 24px 16px;border-bottom:2px solid rgba(0,191,255,0.2);display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.header-title{font-size:clamp(20px,3.5vw,32px);font-weight:700;line-height:1.2;color:#e8f0fe;margin-bottom:4px}
+.header-title span{color:var(--accent2)}
+.header-sub{font-size:13px;color:var(--text2);margin-bottom:10px}
+.export-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;background:var(--accent2);color:#fff;border:none;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:background 0.2s}
+.export-btn:hover{background:#1a7de0}
+.sync-info{font-size:12px;color:var(--text3);margin-top:8px;font-family:var(--mono)}
+.sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green2);margin-right:4px;box-shadow:0 0 5px var(--green2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* SIDEBAR */
+.header-right{background:rgba(255,255,255,0.05);border:1px solid rgba(0,191,255,0.25);border-radius:var(--r);padding:16px;min-width:240px;max-width:290px;flex-shrink:0}
+@media(max-width:700px){.header-right{max-width:100%;width:100%}}
+.sidebar-btn{width:100%;padding:9px 16px;background:var(--accent2);color:#fff;border:none;border-radius:6px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;transition:background 0.2s}
+.sidebar-btn:hover{background:#1a7de0}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:block}
+.form-input{width:100%;padding:8px 12px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border-color 0.2s;margin-bottom:10px}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+select.form-input option{background:#0d2040;color:#e8f0fe}
+
+/* CALENDAR SECTION */
+.cal-section{padding:0 16px 8px}
+.cal-header-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 0 6px;flex-wrap:wrap;gap:8px}
+.month-text{font-size:clamp(18px,2.5vw,26px);font-weight:700;font-family:var(--mono);color:var(--accent);letter-spacing:1px}
+.year-text{font-size:clamp(18px,2.5vw,26px);font-weight:700;color:#e8f0fe;margin-left:8px}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.nav-btn{width:36px;height:36px;border-radius:8px;background:var(--gold);border:none;color:#1a1a1a;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.nav-btn:hover{background:var(--gold2)}
+.today-btn{padding:8px 18px;border-radius:8px;background:var(--gold);border:none;color:#1a1a1a;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s}
+.today-btn:hover{background:var(--gold2)}
+.updated-tag{font-size:11px;font-family:var(--mono);color:var(--text3);font-weight:600;letter-spacing:0.5px}
+
+/* CALENDAR GRID */
+.cal-wrapper{background:var(--bg2);border:1px solid var(--nb);border-radius:var(--r);overflow:hidden}
+.cal-days-header{display:grid;grid-template-columns:repeat(7,1fr);background:rgba(0,0,0,0.3);border-bottom:1px solid var(--nb)}
+.cal-day-name{text-align:center;padding:6px 4px;font-size:11px;font-weight:700;font-family:var(--mono);letter-spacing:1px;border-right:1px solid var(--nb)}
+.cal-day-name:last-child{border-right:none}
+.cal-day-name.sun{color:var(--red2)}.cal-day-name.sat{color:var(--accent)}.cal-day-name.wd{color:#b0c8e0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-cell{min-height:130px;border-right:1px solid var(--nb);border-bottom:1px solid var(--nb);padding:4px 4px;position:relative;transition:background 0.15s;vertical-align:top;overflow:hidden}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-cell:hover{background:rgba(0,191,255,0.04)}
+.cal-cell.other-month{background:rgba(0,0,0,0.2);opacity:0.45}
+.cal-cell.today-cell{background:rgba(0,191,255,0.06)}
+.cal-cell.sun-col .cell-num{color:var(--red2)}
+.cal-cell.sat-col .cell-num{color:var(--accent)}
+.cell-num{font-size:13px;font-family:var(--mono);color:var(--text2);float:right;line-height:1}
+.today-cell .cell-num{background:var(--accent);color:#0a1628;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.cell-clear{clear:both;height:2px}
+
+/* SUMMARY BAR */
+.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 12px;position:relative;overflow:hidden;transition:border-color 0.2s}
+.stat-card:hover{border-color:rgba(255,255,255,0.18)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.stat-card.c-blue::before{background:linear-gradient(90deg,#60aaff,transparent)}
+.stat-card.c-green::before{background:linear-gradient(90deg,#40e878,transparent)}
+.stat-card.c-yellow::before{background:linear-gradient(90deg,#d8e030,transparent)}
+.stat-card.c-purple::before{background:linear-gradient(90deg,#b070ff,transparent)}
+.stat-card.c-cyan::before{background:linear-gradient(90deg,#60d0ff,transparent)}
+.stat-card.c-pink::before{background:linear-gradient(90deg,#ff80c8,transparent)}
+.stat-card.c-white::before{background:linear-gradient(90deg,rgba(255,255,255,0.5),transparent)}
+.stat-label{font-size:9px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
+.stat-value{font-size:22px;font-weight:800;font-family:var(--mono);line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.c-blue .stat-value{color:#60aaff}
+.stat-card.c-green .stat-value{color:#40e878}
+.stat-card.c-yellow .stat-value{color:#d8e030}
+.stat-card.c-purple .stat-value{color:#b070ff}
+.stat-card.c-cyan .stat-value{color:#60d0ff}
+.stat-card.c-pink .stat-value{color:#ff80c8}
+.stat-card.c-white .stat-value{color:#e8f0fe}
+.stat-shipper-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.stat-shipper-pill{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--mono)}
+
+@media(max-width:768px){
+  #summaryBar{grid-template-columns:repeat(2,1fr);padding:4px 6px 0;gap:4px}
+  .stat-value{font-size:16px}
+  .stat-card{padding:5px 8px}
+  .stat-label{font-size:8px;margin-bottom:1px}
+  .stat-sub{font-size:9px;margin-top:2px}
+  .stat-shipper-row{margin-top:4px}
+  .stat-shipper-pill{font-size:10px;padding:2px 6px}
+  .cal-wrapper{display:block}
+  #mobileList{display:none !important}
+  .cal-section{padding:0 2px 6px}
+  .main-header{padding:0!important}
+  .header-right{display:none!important}
+  .legend-bar{font-size:9px;gap:4px;padding:2px 0 4px}
+  /* Mobile cell — minimal height, hide detail rows */
+  .cal-cell{min-height:90px !important;padding:2px 2px}
+  .cell-num{font-size:10px}
+  /* Hide SH/agent rows on mobile — show only row1 (vessel+berth) */
+  .vc-detail-row{display:none !important}
+  .month-text{font-size:18px}
+  .year-text{font-size:18px}
+  .nav-btn{width:28px;height:28px;font-size:15px}
+  .today-btn{padding:5px 12px;font-size:12px}
+  .cal-header-bar{padding:4px 0}
+  .updated-tag{display:none}
+  .more-pill{font-size:8px;margin-top:1px}
+}
+@media(min-width:769px){
+  #mobileList{display:none !important}
+}
+@media(max-width:480px){
+  #summaryBar{grid-template-columns:1fr 1fr;gap:4px}
+  .stat-value{font-size:15px}
+  .cal-cell{min-height:85px !important}
+}
+.vessel-card{margin-top:3px;cursor:pointer;transition:filter 0.15s;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)}
+.vessel-card:hover{filter:brightness(1.2);border-color:rgba(255,255,255,0.25)}
+.vc-label{padding:2px 5px 3px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d8eaff}
+.vessel-card.guf .vc-label{background:#0a1e3a}
+.vessel-card.hkh .vc-label{background:#28180a}
+.vessel-card.egt .vc-label{background:#0a2218}
+.badge{display:inline-flex;align-items:center;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700}
+.badge.jj{background:#1a3a6b;color:#5b9bd5;border:1px solid #2a5a9b}
+.badge.pp{background:#1a4a2a;color:#4cae4c;border:1px solid #2a6a3a}
+.badge.rs{background:#4a1a1a;color:#e07070;border:1px solid #7a2a2a}
+.badge.tb{background:#3a3010;color:#c8b400;border:1px solid #5a5010}
+.badge.sj{background:#1a2a4a;color:#7090c0;border:1px solid #2a4a7a}
+.badge.ns{background:#2a1a4a;color:#9070c0;border:1px solid #4a2a7a}
+.more-pill{font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+/* Mobile compact row: visible only on mobile via media query */
+.vc-mobile-row{display:none}
+/* desktop/mobile card layout toggle */
+.vc-desktop{display:block}
+.vc-mobile{display:none}
+@media(max-width:768px){
+  .vc-desktop{display:none}
+  .vc-mobile{display:block}
+}
+
+/* LEGEND */
+.legend-bar{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 6px;font-size:11px;color:var(--text2)}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-sq{width:10px;height:10px;border-radius:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:999;background:rgba(5,15,30,0.82);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal-box{background:#0d2040;border:1px solid rgba(0,191,255,0.3);border-radius:12px;width:100%;max-width:520px;transform:translateY(12px);transition:transform 0.2s;overflow:hidden;max-height:90vh;overflow-y:auto}
+.modal-bg.open .modal-box{transform:translateY(0)}
+.modal-head{background:rgba(0,191,255,0.07);padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1;background:#0d2040}
+.modal-head-title{font-size:15px;font-weight:700;color:var(--accent)}
+.modal-close{width:28px;height:28px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(231,76,60,0.2);color:var(--red2)}
+.modal-body{padding:18px}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.mf-label{font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:3px}
+.mf-val{font-size:14px;font-weight:500}
+.remark-box{margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:6px;border-left:3px solid var(--accent2)}
+
+/* CFG MODAL */
+.cfg-bg{position:fixed;inset:0;z-index:1000;background:rgba(5,15,30,0.85);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
+@media(min-width:640px){.cfg-bg{align-items:center}}
+.cfg-bg.open{opacity:1;pointer-events:all}
+.cfg-box{background:#0d2040;border:1px solid rgba(0,191,255,0.25);border-radius:12px 12px 0 0;width:100%;max-width:620px;max-height:88vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s}
+@media(min-width:640px){.cfg-box{border-radius:12px;transform:translateY(10px)}}
+.cfg-bg.open .cfg-box{transform:translateY(0)}
+.cfg-head{background:#0d2040;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1}
+.cfg-title{font-size:15px;font-weight:700}
+.cfg-body{padding:18px}
+.cfg-sec-title{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.cfg-sec{margin-bottom:20px}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.test-res{margin-top:8px;padding:8px 12px;border-radius:6px;font-size:12px;font-family:var(--mono);display:none}
+.test-res.ok{background:rgba(46,204,113,0.15);border:1px solid var(--green2);color:var(--green2);display:block}
+.test-res.fail{background:rgba(231,76,60,0.15);border:1px solid var(--red2);color:var(--red2);display:block}
+pre.code-sample{background:rgba(0,0,0,0.35);padding:10px;border-radius:6px;font-size:11px;color:#a0c890;overflow-x:auto;font-family:var(--mono)}
+
+/* GEAR BTN */
+.gear-btn{position:fixed;bottom:20px;right:20px;z-index:100;width:46px;height:46px;border-radius:50%;background:var(--accent2);border:none;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:background 0.2s,transform 0.2s}
+.gear-btn:hover{background:#1a7de0;transform:rotate(30deg)}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:80px;right:20px;z-index:600;display:flex;flex-direction:column;gap:6px}
+.toast{padding:9px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:7px;transform:translateX(120%);transition:transform 0.25s;border:1px solid;min-width:200px;max-width:320px}
+.toast.show{transform:translateX(0)}
+.toast.ok{background:rgba(46,204,113,0.15);border-color:var(--green2);color:var(--green2)}
+.toast.err{background:rgba(231,76,60,0.15);border-color:var(--red2);color:var(--red2)}
+.toast.inf{background:rgba(0,191,255,0.12);border-color:var(--accent);color:var(--accent)}
+
+/* LOADING */
+.loading{position:fixed;inset:0;z-index:900;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity 0.4s}
+.loading.done{opacity:0;pointer-events:none}
+.spinner{width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,191,255,0.15);border-top-color:var(--accent);animation:spin 0.9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .cal-cell{min-height:100px;padding:3px 2px}
+  .cell-num{font-size:11px}
+  .cal-section{padding:0 6px 12px}
+  .main-header{padding:14px 12px}
+}
+@media(max-width:480px){
+  .cal-cell{min-height:80px}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.0/dist/dom-to-image-more.min.js"></script>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div style="font-family:var(--mono);font-size:13px;color:var(--text3)">กำลังโหลดข้อมูล Berth Schedule...</div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+<button class="gear-btn" onclick="openCfg()" title="Settings">⚙</button>
+
+<!-- TOP BAR (slim status strip) -->
+<div class="top-bar">
+  <div style="display:flex;align-items:center;gap:6px">
+    <span class="top-bar-title">LMPT2 Vessel Schedule</span>
+    <span style="color:rgba(255,255,255,0.25)">|</span>
+    <span>Berth Schedule – Marine Safety Area</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="sync-dot"></span>
+    <span id="syncStatus" style="color:#7a9abf">–</span>
+    <span style="color:rgba(255,255,255,0.25)">|</span>
+    <span style="font-family:var(--mono)">ล่าสุด <span id="syncTime">—</span></span>
+  </div>
+</div>
+
+<!-- COMPACT CONTROL BAR -->
+<div class="ctrl-bar">
+  <span class="ctrl-title">กำหนดการเรือ <span>(LMPT2)</span></span>
+  <div class="ctrl-sep"></div>
+  <input type="text" class="ctrl-search" id="searchInput" placeholder="🔍 ค้นหาเรือ / เลมเรือ..." oninput="filterRender()">
+  <select class="ctrl-select" id="vesselSelect" onchange="onSelectVessel()">
+    <option value="">— ชื่อเรือ —</option>
+  </select>
+  <select class="ctrl-select" id="portFilter" onchange="filterRender()">
+    <option value="">— ท่าทั้งหมด —</option>
+    <option value="GUF">GUF</option>
+    <option value="HKH">HKH</option>
+    <option value="EGT">EGT</option>
+  </select>
+  <div class="ctrl-sep"></div>
+  <button class="home-btn" onclick="goHome()">🏠 Home</button>
+  <button class="export-btn" onclick="exportPNG()">📷 Export PNG</button>
+</div>
+
+<!-- hidden old header elements (IDs still needed by JS) -->
+<div class="main-header" style="display:none">
+  <div>
+    <h1 class="header-title">กำหนดการเรือเข้าเทียบท่าเรือหนองแฟบ <span>(LMPT2)</span></h1>
+  </div>
+  <div class="header-right"></div>
+</div>
+
+<!-- SUMMARY BAR -->
+<div id="summaryBar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;padding:6px 16px 6px;background:var(--bg)">
+  <!-- filled by JS -->
+</div>
+
+<!-- CALENDAR SECTION -->
+<div class="cal-section">
+  <div class="legend-bar">
+    <div class="legend-item"><div class="legend-sq" style="background:#0d1e3a;border:2px solid #1e90ff"></div><span style="color:#60aaff">GUF</span> – GULF</div>
+    <div class="legend-item"><div class="legend-sq" style="background:#081e12;border:2px solid #20c060"></div><span style="color:#40e878">HKH</span> – HIN KONG POWER</div>
+    <div class="legend-item"><div class="legend-sq" style="background:#141e04;border:2px solid #c8c020"></div><span style="color:#d8e030">EGT</span> – EGAT</div>
+    <div class="legend-item"><div class="legend-sq" style="background:#081828;border:2px solid #40c8f0"></div><span style="color:#60d0ff">PTT</span> – PTT Group</div>
+    <div class="legend-item"><div class="legend-sq" style="background:#1e0828;border:2px solid #ff80c8"></div><span style="color:#ff80c8">Co-loading</span></div>
+    <div style="width:1px;background:rgba(255,255,255,0.15);margin:0 4px"></div>
+    <div class="legend-item"><div class="legend-sq" style="background:#1c5c28;border:1px solid #50ee70"></div><span style="color:#50ee70">เขียว = กะเช้า (SH1)</span></div>
+    <div class="legend-item"><div class="legend-sq" style="background:#5c1818;border:1px solid #ff6060"></div><span style="color:#ff6060">แดง = กะดึก (SH2)</span></div>
+    <div style="width:1px;background:rgba(255,255,255,0.15);margin:0 4px"></div>
+    <span style="font-size:11px;color:var(--text3)">RS=Rung · TB=Benz · JJ=Champ · NS=Jack · SJ=Chai · PP=Hugo</span>
+  </div>
+
+  <div class="cal-header-bar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:22px">📅</span>
+      <span class="month-text" id="monthText">—</span>
+      <span class="year-text" id="yearText">—</span>
+    </div>
+    <div class="cal-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <button class="today-btn" onclick="goToday()">Today</button>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="updated-tag" id="updatedTag">UPDATED: —</div>
+  </div>
+
+  <div class="cal-wrapper">
+    <div class="cal-days-header" id="daysHeader"></div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <!-- MOBILE LIST VIEW -->
+  <div id="mobileList" style="display:none;margin-top:10px"></div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-bg" id="eventModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-head-title" id="modalTitle">รายละเอียดเรือ</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- CFG MODAL -->
+<div class="cfg-bg" id="cfgModal">
+  <div class="cfg-box">
+    <div class="cfg-head">
+      <div class="cfg-title">⚙ ตั้งค่า Power Automate &amp; Column Mapping</div>
+      <button class="modal-close" onclick="closeCfg()">✕</button>
+    </div>
+    <div class="cfg-body">
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Power Automate HTTP URL</div>
+        <label class="form-label">HTTP Trigger URL (จาก Manual trigger)</label>
+        <input class="form-input" id="cfgUrl" placeholder="https://prod-xx.eastasia.logic.azure.com:443/workflows/...">
+        <label class="form-label">Authorization (ถ้ามี)</label>
+        <input class="form-input" id="cfgAuth" placeholder="Bearer eyJ...">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button onclick="testConn()" style="padding:7px 14px;border-radius:6px;background:rgba(0,191,255,0.15);border:1px solid var(--accent);color:var(--accent);font-family:var(--font);font-size:13px;cursor:pointer">🔌 Test</button>
+          <button onclick="saveCfg()" style="padding:7px 14px;border-radius:6px;background:var(--accent2);border:none;color:#fff;font-family:var(--font);font-size:13px;cursor:pointer">💾 บันทึก &amp; โหลดใหม่</button>
+          <button onclick="loadSample();closeCfg()" style="padding:7px 14px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.2);color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer">📊 Sample Data</button>
+          <button onclick="debugData()" style="padding:7px 14px;border-radius:6px;background:rgba(255,180,0,0.15);border:1px solid #f5a623;color:#f5a623;font-family:var(--font);font-size:13px;cursor:pointer">🔍 Debug Date</button>
+        </div>
+        <div class="test-res" id="testRes"></div>
+      </div>
+
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Column Mapping — ชื่อคอลัมน์ใน Excel (Table35)</div>
+        <div class="cfg-grid">
+          <div><label class="form-label">Year</label><input class="form-input" id="cYear" value="Year"></div>
+          <div><label class="form-label">Yearly (ลำดับ)</label><input class="form-input" id="cYearly" value="Yearly"></div>
+          <div><label class="form-label">Shipper (ท่า: GUF/HKH/EGT)</label><input class="form-input" id="cShipper" value="Shipper"></div>
+          <div><label class="form-label">C0-shipper</label><input class="form-input" id="cCoShipper" value="C0-shipper"></div>
+          <div><label class="form-label">Supplier</label><input class="form-input" id="cSupplier" value="Supplier"></div>
+          <div><label class="form-label">Cargo no.</label><input class="form-input" id="cCargoNo" value="Cargo no."></div>
+          <div><label class="form-label">Ship no. (Trip)</label><input class="form-input" id="cShipNo" value="Ship no."></div>
+          <div><label class="form-label">Ship name (ชื่อเรือ)</label><input class="form-input" id="cShipName" value="Ship name"></div>
+          <div><label class="form-label">Arr Date (ETA)</label><input class="form-input" id="cArrDate" value="Arr Date"></div>
+          <div><label class="form-label">Dep Date (ETD)</label><input class="form-input" id="cDepDate" value="Dep Date"></div>
+          <div><label class="form-label">Approx. Vol</label><input class="form-input" id="cVol" value="Approx. Vol"></div>
+          <div><label class="form-label">remark</label><input class="form-input" id="cRemark" value="remark"></div>
+          <div><label class="form-label">SH1 (บริษัท 1)</label><input class="form-input" id="cSH1" value="SH1"></div>
+          <div><label class="form-label">SH2 (บริษัท 2)</label><input class="form-input" id="cSH2" value="SH2"></div>
+          <div><label class="form-label">Loop (Vessel)</label><input class="form-input" id="cLoop" value="Loop"></div>
+          <div><label class="form-label">Agent</label><input class="form-input" id="cAgent" value="Agent"></div>
+        </div>
+      </div>
+
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">ตัวอย่าง JSON Response ที่ Flow ควร Return</div>
+        <pre class="code-sample">{
+  "value": [
+    {
+      "Year": 2026,
+      "Yearly": 21,
+      "Shipper": "GUF",
+      "C0-shipper": "PTT",
+      "Supplier": "Marubeni",
+      "Cargo no.": "GUF048&PTT094-T2-21/2026",
+      "Ship no.": 208,
+      "Ship name": "ENERGY ATLANTIC",
+      "Arr Date": "2026-04-07",
+      "Dep Date": "2026-04-08",
+      "Approx. Vol": 145000,
+      "remark": "",
+      "SH1": "(SJ) & NS",
+      "SH2": "[PP] & (RS)",
+      "Loop": "Vessel 46"
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== COLUMN CONFIG =====
+const MONTHS_EN = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
+let curDate = new Date();
+let allData = [];
+const DEFAULT_URL = 'https://defaultd303db8cd0344010a7eec47bebf5bc.a3.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4b211fa2d43743d8af1d73e313c47dbd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Yz1_aazMYJ3KNnuYqHavnFfeYWi_lhR-bZMYKnW-fyM';
+
+let cfg = {
+  url: DEFAULT_URL,
+  auth:'',
+  cYear:'Year',
+  cYearly:'Yearly ship no_x002e_',
+  cShipper:'Shipper',
+  cCoShipper:'C0-shipper',
+  cSupplier:'Supplier',
+  cCargoNo:'Cargo no_x002e_',
+  cShipNo:'Ship no_x002e_',
+  cShipName:'Ship name',
+  cArrDate:'Arr Date',
+  cDepDate:'Dep Date',
+  cVol:'ApproxVol',
+  cRemark:'remark',
+  cSH1:'SH1',
+  cSH2:'SH2',
+  cLoop:'Loop',
+  cAgent:'Agent'
+};
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  loadCfgStorage();
+  renderDaysHeader();
+  loadSample(); // show sample while loading
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('done');
+    fetchData(); // auto-fetch real data immediately
+    setInterval(() => fetchData(), 30000); // auto-sync every 30s
+  }, 700);
+});
+
+// ===== CONFIG =====
+function loadCfgStorage() {
+  try {
+    const s = localStorage.getItem('lmpt2v2');
+    if(s) cfg = {...cfg, ...JSON.parse(s)};
+  } catch(e) {}
+  // Always use hardcoded URL — never let localStorage override it
+  cfg.url = DEFAULT_URL;
+  document.getElementById('cfgUrl').value = cfg.url;
+  document.getElementById('cfgAuth').value = cfg.auth||'';
+  ['Year','Yearly','Shipper','CoShipper','Supplier','CargoNo','ShipNo','ShipName',
+   'ArrDate','DepDate','Vol','Remark','SH1','SH2','Loop','Agent'].forEach(k => {
+    const el = document.getElementById('c'+k);
+    if(el) el.value = cfg['c'+k]||el.value;
+  });
+}
+function saveCfg() {
+  cfg.url = document.getElementById('cfgUrl').value.trim();
+  cfg.auth = document.getElementById('cfgAuth').value.trim();
+  ['Year','Yearly','Shipper','CoShipper','Supplier','CargoNo','ShipNo','ShipName',
+   'ArrDate','DepDate','Vol','Remark','SH1','SH2','Loop','Agent'].forEach(k => {
+    const el = document.getElementById('c'+k);
+    if(el) cfg['c'+k] = el.value.trim()||cfg['c'+k];
+  });
+  localStorage.setItem('lmpt2v2', JSON.stringify(cfg));
+  closeCfg();
+  if(cfg.url) fetchData(); else toast('บันทึกแล้ว — ใส่ URL เพื่อเชื่อมต่อ Power Automate','inf');
+}
+
+// ===== FETCH =====
+async function fetchData() {
+  if(!cfg.url) return;
+  // Try fetch first, fallback to XHR (works better from file://)
+  try {
+    const data = await fetchWithFallback(cfg.url);
+    const rows = Array.isArray(data) ? data : (data.value||data.data||data.rows||[]);
+    if(!rows.length) { toast('ได้ข้อมูลแต่ไม่มี rows — ตรวจสอบ Response ใน Flow','err'); return; }
+    // Log column names from first row
+    console.log('Column names:', Object.keys(rows[0]));
+    console.log('First raw row:', JSON.stringify(rows[0]));
+    allData = rows.map(mapRow);
+    // Debug: log first row to console
+    console.log('First row sample:', JSON.stringify(rows[0]));
+    setTime(); buildDropdown(); renderCal(); updateSummaryBar();
+    toast('โหลดสำเร็จ '+allData.length+' รายการ','ok');
+  } catch(e) {
+    toast('Error: '+e.message,'err');
+    console.error(e);
+  }
+}
+
+function fetchWithFallback(url) {
+  return new Promise((resolve, reject) => {
+        var doFetch = function() {
+      fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'getSchedule'})
+      })
+      .then(function(r) {
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      })
+      .then(resolve)
+      .catch(function(err) {
+        reject(err);
+      });
+    };
+    doFetch();
+  });
+}
+
+function mapRow(r) {
+  // Parse date — handles ISO, Excel serial number, Thai date string
+  var parseDate = function(v) {
+    if(!v) return null;
+    // Convert string number to actual number
+    var num = typeof v === 'string' ? parseFloat(v) : v;
+    // Excel serial number (40000-60000 = year 2009-2064)
+    if(!isNaN(num) && num > 40000 && num < 60000) {
+      return new Date(Math.round((num - 25569) * 86400 * 1000));
+    }
+    if(typeof v === 'string') {
+      var thMap = {
+        'มกราคม':0,'ม.ค.':0,'ก.พ.':1,'กุมภาพันธ์':1,
+        'มีนาคม':2,'มี.ค.':2,'เมษายน':3,'เม.ย.':3,
+        'พฤษภาคม':4,'พ.ค.':4,'มิถุนายน':5,'มิ.ย.':5,
+        'กรกฎาคม':6,'ก.ค.':6,'สิงหาคม':7,'ส.ค.':7,
+        'กันยายน':8,'ก.ย.':8,'ตุลาคม':9,'ต.ค.':9,
+        'พฤศจิกายน':10,'พ.ย.':10,'ธันวาคม':11,'ธ.ค.':11
+      };
+      var m1 = v.match(/(\d+)\s+([\u0E00-\u0E7F.]+)\s+(\d+)/);
+      if(m1) {
+        var d1=parseInt(m1[1]),mo1=thMap[m1[2].trim()],y1=parseInt(m1[3]);
+        if(y1<100) y1+=(y1>60?1900:2000); if(y1>2500) y1-=543;
+        if(mo1!==undefined) return new Date(y1,mo1,d1);
+      }
+      var m2 = v.match(/(\d+)[-\/]([\u0E00-\u0E7F.]+)[-\/](\d+)/);
+      if(m2) {
+        var d2=parseInt(m2[1]),mo2=thMap[m2[2].trim()],y2=parseInt(m2[3]);
+        if(y2<100) y2+=(y2>60?1900:2000); if(y2>2500) y2-=543;
+        if(mo2!==undefined) return new Date(y2,mo2,d2);
+      }
+      var d3 = new Date(v);
+      return isNaN(d3)?null:d3;
+    }
+    return null;
+  };
+  const fixYear = v => { const n = parseInt(v); return n > 2500 ? n-543 : n; };
+  return {
+    year: fixYear(r[cfg.cYear])||new Date().getFullYear(),
+    yearly: r[cfg.cYearly]||'',
+    shipper: (r[cfg.cShipper]||'').toUpperCase(),
+    coShipper: r[cfg.cCoShipper]||'',
+    supplier: r[cfg.cSupplier]||'',
+    cargoNo: r[cfg.cCargoNo]||'',
+    shipNo: r[cfg.cShipNo]||r[cfg.cYearly]||'',
+    vessel: r[cfg.cShipName]||'',
+    arrDate: parseDate(r[cfg.cArrDate]),
+    depDate: parseDate(r[cfg.cDepDate]),
+    vol: r[cfg.cVol]||'',
+    remark: r[cfg.cRemark]||'',
+    sh1: r[cfg.cSH1]||'',
+    sh2: r[cfg.cSH2]||'',
+    loop: r[cfg.cLoop]||'',
+    agent: r[cfg.cAgent]||'',
+  };
+}
+
+// ===== SAMPLE DATA (from screenshot) =====
+function loadSample() {
+  const yr = new Date().getFullYear();
+  // Using actual data visible in screenshot + extended
+  const raw = [
+    {y:21,sh:'GUF',co:'PTT',sup:'Marubeni',cn:'GUF048&PTT094-T2-21/2026',sn:208,nm:'ENERGY ATLANTIC',arr:'2026-04-07',dep:'2026-04-08',vol:145000,rem:'',s1:'(SJ) & NS',s2:'[PP] & (RS)',lp:'Vessel 46'},
+    {y:22,sh:'GUF',co:'',sup:'Hartree',cn:'GUF049-T2-22/2026',sn:209,nm:'SEAPEAK CREOLE',arr:'2026-04-10',dep:'2026-04-11',vol:156600,rem:'9-16 Apr RS ไป ดจว.',s1:'JJ & SJ',s2:'[TB] & [(NS)]',lp:'Vessel 47'},
+    {y:23,sh:'EGT',co:'',sup:'PETRO CHINA',cn:'EGT039-T2-23/2026',sn:210,nm:'JOHN A. ANGELICOUSSIS',arr:'2026-04-17',dep:'2026-04-18',vol:125400,rem:'',s1:'TB & (RS)',s2:'(SJ) & NS',lp:'Vessel 48'},
+    {y:24,sh:'HKH',co:'',sup:'TBC',cn:'HKH032-T2-24/2026',sn:211,nm:'CELSIUS CAROLINA',arr:'2026-04-22',dep:'2026-04-23',vol:166150,rem:'POB15:00 / 22 เย็นเตะบอลน้ำร้อง+ดม.',s1:'PP &[TB]',s2:'JJ & SJ',lp:'Vessel 1'},
+    {y:25,sh:'GUF',co:'',sup:'PTTT',cn:'GUF050-T2-25/2026',sn:212,nm:'KOOL CRYSTAL',arr:'2026-04-25',dep:'2026-04-26',vol:133700,rem:'POB15:00 / 22&24 Jack อบรม LMS',s1:'(SJ) & (JJ)',s2:'[NS] & (RS)',lp:'Vessel 2'},
+    {y:26,sh:'GUF',co:'',sup:'Cheniere',cn:'GUF051-T2-26/2026',sn:213,nm:'CLEAN DESTINY',arr:'2026-04-27',dep:'2026-04-28',vol:174000,rem:'',s1:'[(RS)]&SJ',s2:'PP & TB',lp:'Vessel 3'},
+    {y:27,sh:'EGT',co:'',sup:'PETRO CHINA',cn:'EGT040-T2-27/2026',sn:214,nm:'TIANSHAN',arr:'2026-04-29',dep:'2026-04-30',vol:135000,rem:'30 Apr NS TB อบรม Co-Pilot',s1:'JJ & [NS]',s2:'RS & [SJ]',lp:'Vessel 4'},
+    {y:28,sh:'GUF',co:'',sup:'PTTT',cn:'GUF052-T2-28/2026',sn:215,nm:'COOL RANGER',arr:'2026-05-01',dep:'2026-05-02',vol:146100,rem:'',s1:'[JJ] & SJ',s2:'[PP] & RS',lp:'Vessel 5'},
+    {y:29,sh:'GUF',co:'',sup:'Vitol',cn:'GUF053-T2-29/2026',sn:216,nm:'ENERGY ATLANTIC',arr:'2026-05-04',dep:'2026-05-05',vol:160900,rem:'RS สลับกับ SJ',s1:'[SJ] & NS',s2:'TB & [RS]',lp:'Vessel 6'},
+    {y:30,sh:'GUF',co:'',sup:'ENI',cn:'GUF054-T2-30/2026',sn:217,nm:'GASLOG ITALY',arr:'2026-05-08',dep:'2026-05-09',vol:148400,rem:'6-8 JJ ไปสัมนา / 8 May - RS PSM Audit',s1:'[PP] & SJ',s2:'[TB] & (NS)',lp:'Vessel 7'},
+    {y:31,sh:'HKH',co:'',sup:'Gunvor',cn:'HKH033-T2-31/2026',sn:218,nm:'SERI CAMELLIA',arr:'2026-05-10',dep:'2026-05-11',vol:143850,rem:'11-13 May พี่รุ่งลา Holiday',s1:'TB & SJ',s2:'[JJ] & NS',lp:'Vessel 8'},
+    {y:32,sh:'GUF',co:'',sup:'PTTT',cn:'GUF055-T2-32/2026',sn:219,nm:'BW PAVILION LEEARA',arr:'2026-05-17',dep:'2026-05-18',vol:147900,rem:'tentative VISA PP',s1:'{RS} & SJ',s2:'JJ & TB',lp:'Vessel 9'},
+    {y:33,sh:'GUF',co:'',sup:'PETRO CHINA',cn:'GUF056-T2-33/2026',sn:220,nm:'FLEX AMBER',arr:'2026-05-21',dep:'2026-05-22',vol:160400,rem:'',s1:'JJ &{PP}',s2:'TB & SJ',lp:'Vessel 10'},
+    {y:34,sh:'EGT',co:'',sup:'PETRO CHINA',cn:'EGT041-T2-34/2026',sn:221,nm:'GLOBAL SEALINE',arr:'2026-05-24',dep:'2026-05-25',vol:147900,rem:'27 May : RS Change Camp (T1)',s1:'JJ & SJ',s2:'PP & RS',lp:'Vessel 11'},
+    {y:35,sh:'HKH',co:'',sup:'BP',cn:'HKH034-T2-35/2026',sn:222,nm:'GREENERGY MOON',arr:'2026-05-25',dep:'2026-05-26',vol:157300,rem:'25-31 May: JJ not available',s1:'TB & SJ',s2:'RS & NS',lp:'Vessel 12'},
+    {y:36,sh:'GUF',co:'',sup:'ENI',cn:'GUF057-T2-36/2026',sn:223,nm:'Maran Gas Delphi',arr:'2026-05-28',dep:'2026-05-29',vol:157000,rem:'TB รับเรือแทน JJ',s1:'PP & PP',s2:'NS & TB(JJ)',lp:'Vessel 13'},
+    {y:37,sh:'GUF',co:'',sup:'GLNGI',cn:'GUF058-T2-37/2026',sn:224,nm:'CELSIUS CANBERRA',arr:'2026-05-30',dep:'2026-05-31',vol:175078,rem:'JJ รับเรือแทน JJ',s1:'RS & NS',s2:'PP(JJ) & NS',lp:'Vessel 14'},
+    {y:38,sh:'HKH',co:'',sup:'PETRO CHINA',cn:'HKH035-T2-38/2026',sn:225,nm:'MARVEL FALCON',arr:'2026-06-04',dep:'2026-06-05',vol:147900,rem:'',s1:'JJ & SJ',s2:'PP & TB',lp:'Vessel 15'},
+    {y:39,sh:'GUF',co:'',sup:'ADNOC',cn:'GUF059-T2-39/2026',sn:226,nm:'Clean Sirocco',arr:'2026-06-08',dep:'2026-06-09',vol:165300,rem:'9 June : RS Change Camp (T2)',s1:'(RS) & SJ',s2:'(JJ) & NS',lp:'Vessel 16'},
+    {y:40,sh:'EGT',co:'',sup:'PETRO CHINA',cn:'EGT042-T2-40/2026',sn:227,nm:'SOLARIS',arr:'2026-06-12',dep:'2026-06-13',vol:164400,rem:'',s1:'TB & SJ',s2:'JJ & RS',lp:'Vessel 17'},
+    {y:41,sh:'GUF',co:'',sup:'CHENIERE',cn:'GUF060-T2-41/2026',sn:228,nm:'Celsius Charlotte',arr:'2026-06-16',dep:'2026-06-17',vol:160900,rem:'12-20 June PP Optimoor',s1:'RS & NS',s2:'TB & SJ',lp:'Vessel 18'},
+    {y:42,sh:'GUF',co:'',sup:'PetroChina',cn:'GUF061-T2-42/2026',sn:229,nm:'SERI CAMELLIA',arr:'2026-06-22',dep:'2026-06-23',vol:156600,rem:'',s1:'PP & NS',s2:'TB & JJ',lp:'Vessel 19'},
+  ];
+  allData = raw.map(r => ({
+    year: 2026, yearly: r.y, shipper: r.sh, coShipper: r.co, supplier: r.sup,
+    cargoNo: r.cn, shipNo: r.sn, vessel: r.nm,
+    arrDate: new Date(r.arr), depDate: new Date(r.dep),
+    vol: r.vol, remark: r.rem, sh1: r.s1, sh2: r.s2, loop: r.lp
+  }));
+  setTime(); buildDropdown(); renderCal(); updateSummaryBar();
+  toast('โหลด Sample Data ('+allData.length+' รายการ)','inf');
+}
+
+// ===== RENDER =====
+function updateSummaryBar() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var mo = curDate.getMonth(), yr = curDate.getFullYear();
+
+  // จำนวนเรือทั้งหมดที่เข้าตั้งแต่ต้นปีถึงปัจจุบัน
+  var yearUpcoming = allData.filter(function(d){
+    return d.arrDate && d.arrDate.getFullYear()===yr && d.arrDate <= today;
+  }).length;
+
+  // จำนวนเรือเดือนปัจจุบัน (ทั้งเดือน ไม่กรองผ่านแล้ว)
+  var monthAll = allData.filter(function(d){
+    return d.arrDate && d.arrDate.getMonth()===mo && d.arrDate.getFullYear()===yr;
+  });
+  var monthCount = monthAll.length;
+
+  // Vol รวมเดือนนี้
+  var totalVol = monthAll.reduce(function(s,d){
+    var v = parseFloat(String(d.vol||'0').replace(/,/g,''));
+    return s + (isNaN(v)?0:v);
+  }, 0);
+
+  // แยก Shipper เดือนนี้
+  var shipperCount = {};
+  monthAll.forEach(function(d){
+    var k = d.shipper||'OTHER';
+    shipperCount[k] = (shipperCount[k]||0)+1;
+  });
+
+  var shipperColors = {GUF:'#60aaff',HKH:'#40e878',EGT:'#d8e030',PTT:'#60d0ff',OTHER:'#b070ff'};
+  var shipperBg     = {GUF:'rgba(80,150,255,0.15)',HKH:'rgba(40,210,100,0.15)',EGT:'rgba(200,210,30,0.15)',PTT:'rgba(60,180,255,0.15)',OTHER:'rgba(160,100,255,0.15)'};
+
+  var shipperPills = Object.keys(shipperCount).sort().map(function(k){
+    return '<span class="stat-shipper-pill" style="background:'+shipperBg[k]+';color:'+(shipperColors[k]||'#aaa')+';border:1px solid '+(shipperColors[k]||'#aaa')+'44">'
+      +'<span>'+k+'</span><span style="font-size:14px;font-weight:900">'+shipperCount[k]+'</span></span>';
+  }).join('');
+
+  // Total vol ปีนี้ทั้งหมด (ถึงปัจจุบัน)
+  var yearVol = allData.filter(function(d){
+    return d.arrDate && d.arrDate.getFullYear()===yr && d.arrDate<=today;
+  }).reduce(function(s,d){
+    var v=parseFloat(String(d.vol||'0').replace(/,/g,''));
+    return s+(isNaN(v)?0:v);
+  },0);
+
+  var MONTHS_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+  document.getElementById('summaryBar').innerHTML =
+    // Card 1: เรือเข้าทั้งหมดตั้งแต่ต้นปีถึงวันนี้
+    '<div class="stat-card c-white">'
+    +'<div class="stat-label">เรือเข้าปี '+(yr+543)+' (ถึงวันนี้)</div>'
+    +'<div class="stat-value">'+yearUpcoming+'</div>'
+    +'<div class="stat-sub">ลำ ตั้งแต่ 1 ม.ค. – วันนี้</div>'
+    +'</div>'
+    // Card 2: เรือเดือนนี้
+    +'<div class="stat-card c-blue">'
+    +'<div class="stat-label">เรือเดือน '+MONTHS_TH[mo]+' '+(yr+543)+'</div>'
+    +'<div class="stat-value">'+monthCount+'</div>'
+    +'<div class="stat-sub">ลำ ทั้งเดือน</div>'
+    +'</div>'
+    // Card 3: Shipper แยกเดือนนี้
+    +'<div class="stat-card c-yellow" style="grid-column:span 2">'
+    +'<div class="stat-label">Shipper เดือน '+MONTHS_TH[mo]+' '+(yr+543)+'</div>'
+    +'<div class="stat-shipper-row">'+shipperPills+'</div>'
+    +'<div class="stat-sub" style="margin-top:6px">รวม '+monthCount+' ลำ</div>'
+    +'</div>';
+}
+
+function renderMobileList() {
+  var mo = curDate.getMonth(), yr = curDate.getFullYear();
+  var filtered = getFiltered().filter(function(d){
+    return d.arrDate && d.arrDate.getMonth()===mo && d.arrDate.getFullYear()===yr;
+  }).sort(function(a,b){ return a.arrDate-b.arrDate; });
+
+  var MONTHS_TH_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+  if(!filtered.length) {
+    document.getElementById('mobileList').innerHTML =
+      '<div style="text-align:center;padding:40px;color:var(--text3);font-family:var(--mono)">ไม่มีเรือเดือนนี้</div>';
+    return;
+  }
+
+  var html = filtered.map(function(e) {
+    var sh = e.shipper.toUpperCase();
+    var portCol  = sh==='GUF'?'#60aaff':sh==='HKH'?'#40e878':sh==='EGT'?'#d8e030':'#60d0ff';
+    var cardBg   = sh==='GUF'?'#0c1e3a':sh==='HKH'?'#081e12':sh==='EGT'?'#141e04':'#081828';
+    var borderCol= sh==='GUF'?'rgba(80,150,255,0.4)':sh==='HKH'?'rgba(40,210,100,0.4)':sh==='EGT'?'rgba(200,210,30,0.4)':'rgba(60,180,255,0.4)';
+    var portLabel= sh==='GUF'?'GULF':sh==='HKH'?'HKH':sh==='EGT'?'EGAT':sh;
+
+    var eta = e.arrDate ? e.arrDate.getDate()+'/'+(e.arrDate.getMonth()+1)+'/'+(e.arrDate.getFullYear()+543) : '—';
+    var etd = e.depDate ? e.depDate.getDate()+'/'+(e.depDate.getMonth()+1)+'/'+(e.depDate.getFullYear()+543) : '—';
+    var sh1 = (e.sh1||'').trim();
+    var sh2 = (e.sh2||'').trim();
+    var agent = (e.agent||'').trim();
+    var vol = e.vol ? parseFloat(String(e.vol).replace(/,/g,'')) : 0;
+    var volStr = vol>0 ? vol.toLocaleString()+' m³' : '—';
+
+    var edObj = {vessel:e.vessel,yearly:e.yearly,shipNo:e.shipNo,shipper:e.shipper,
+      supplier:e.supplier,cargoNo:e.cargoNo,vol:e.vol,remark:e.remark,
+      sh1:e.sh1,sh2:e.sh2,loop:e.loop,agent:e.agent,
+      arrDate:e.arrDate?e.arrDate.toISOString():null,
+      depDate:e.depDate?e.depDate.toISOString():null};
+    var ed = JSON.stringify(edObj).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+    return '<div onclick="openEvent(\''+ed+'\')" style="background:'+cardBg+';border:2px solid '+borderCol+';'
+      +'border-radius:10px;margin-bottom:10px;overflow:hidden;cursor:pointer">'
+      // Header
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;'
+      +'background:rgba(0,0,0,0.2);border-bottom:1px solid rgba(255,255,255,0.07)">'
+      +'<div>'
+      +'<span style="color:'+portCol+';font-size:14px;font-weight:800;font-family:monospace">'+e.shipNo+'</span>'
+      +'<span style="color:#ddeeff;font-size:14px;font-weight:800;text-transform:uppercase;margin-left:8px;font-style:italic">'+e.vessel+'</span>'
+      +'</div>'
+      +'<span style="background:rgba(255,255,255,0.08);color:'+portCol+';font-size:11px;font-weight:700;'
+      +'font-family:monospace;padding:3px 9px;border-radius:4px;border:1px solid '+borderCol+'">'+portLabel+'</span>'
+      +'</div>'
+      // Body
+      +'<div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      // ETA/ETD
+      +'<div><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:2px">ETA</div>'
+      +'<div style="font-size:13px;font-weight:700;color:#52dd6a;font-family:monospace">'+eta+'</div></div>'
+      +'<div><div style="font-size:10px;color:var(--text3);font-family:monospace;margin-bottom:2px">ETD</div>'
+      +'<div style="font-size:13px;font-weight:700;color:#f5a623;font-family:monospace">'+etd+'</div></div>'
+      // Day/Night
+      +(sh1?'<div><div style="font-size:10px;color:#4a8060;font-family:monospace;margin-bottom:2px">☀ Day</div>'
+        +'<span style="background:#122a18;color:#60ee80;border-radius:4px;padding:3px 8px;font-size:12px;font-weight:800;font-family:monospace;border:1px solid #1e6030">'+sh1+'</span></div>':'')
+      +(sh2?'<div><div style="font-size:10px;color:#804040;font-family:monospace;margin-bottom:2px">🌙 Night</div>'
+        +'<span style="background:#2e1010;color:#ff7070;border-radius:4px;padding:3px 8px;font-size:12px;font-weight:800;font-family:monospace;border:1px solid #602020">'+sh2+'</span></div>':'')
+      // Agent + Vol
+      +'<div style="grid-column:span 2;display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">'
+      +(agent?'<span style="background:rgba(245,182,35,0.15);color:#f5c842;border-radius:4px;padding:3px 9px;font-size:12px;font-weight:700;font-family:monospace;border:1px solid rgba(245,182,35,0.35)">🚢 '+agent+'</span>':'')
+      +(vol>0?'<span style="background:rgba(80,160,255,0.12);color:#80c0ff;border-radius:4px;padding:3px 9px;font-size:12px;font-weight:600;font-family:monospace;border:1px solid rgba(80,160,255,0.3)">'+volStr+'</span>':'')
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  document.getElementById('mobileList').innerHTML = html;
+}
+
+function renderDaysHeader() {
+  document.getElementById('daysHeader').innerHTML = DAYS.map((d,i)=>
+    `<div class="cal-day-name ${i===0?'sun':i===6?'sat':'wd'}">${d}</div>`).join('');
+}
+
+// Event delegation — handles clicks on vessel cards anywhere in the calendar
+document.addEventListener('click', function(e) {
+  var card = e.target.closest('[data-ed]');
+  if(card) {
+    var raw = card.getAttribute('data-ed');
+    // decode &quot; back to "
+    raw = raw.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    openEvent(raw);
+  }
+});
+
+function getFiltered() {
+  const q = (document.getElementById('searchInput').value||'').toLowerCase().trim();
+  const p = document.getElementById('portFilter').value;
+  return allData.filter(d => {
+    if(p && d.shipper !== p) return false;
+    if(!q) return true;
+    return d.vessel.toLowerCase().includes(q) ||
+      String(d.shipNo).includes(q) ||
+      String(d.yearly).includes(q) ||
+      d.shipper.toLowerCase().includes(q) ||
+      d.supplier.toLowerCase().includes(q);
+  });
+}
+
+function renderCal() {
+  const yr = curDate.getFullYear(), mo = curDate.getMonth();
+  const today = new Date();
+  document.getElementById('monthText').textContent = MONTHS_EN[mo];
+  document.getElementById('yearText').textContent = yr + 543; // Thai year
+
+  const filtered = getFiltered();
+  const firstDay = new Date(yr,mo,1).getDay();
+  const lastDate = new Date(yr,mo+1,0).getDate();
+  let cells=[];
+  for(let i=0;i<firstDay;i++) cells.push({date:new Date(yr,mo,1-(firstDay-i)),other:true});
+  for(let d=1;d<=lastDate;d++) cells.push({date:new Date(yr,mo,d),other:false});
+  while(cells.length%7!==0) cells.push({date:new Date(yr,mo+1,cells.length-firstDay-lastDate+1),other:true});
+
+  document.getElementById('calGrid').innerHTML = cells.map((cell,idx)=>{
+    const col=idx%7;
+    const isToday = cell.date.toDateString()===today.toDateString();
+    const ds = cell.date.toDateString();
+    const dayEvs = filtered.filter(e=>e.arrDate && e.arrDate.toDateString()===ds);
+    const show = dayEvs.slice(0,3);
+    const extra = dayEvs.length-3;
+    const colCls = col===0?'sun-col':col===6?'sat-col':'';
+    return `<div class="cal-cell${cell.other?' other-month':''}${isToday?' today-cell':''} ${colCls}">
+      <span class="cell-num">${cell.date.getDate()}</span>
+      <div class="cell-clear"></div>
+      ${show.map(e=>vesselCardHTML(e)).join('')}
+      ${extra>0?`<div class="more-pill">+${extra} เรือ</div>`:''}
+    </div>`;
+  }).join('');
+  renderMobileList();
+}
+
+function vesselCardHTML(e) {
+  var sh = e.shipper.toUpperCase();
+  var sup = (e.supplier||'').toUpperCase();
+  var isCoload = e.coShipper && e.coShipper.trim()!=='';
+
+  var theme;
+  if(isCoload) {
+    theme={pc:'#ff80c8',bg:'#1e0828',hd:'#160620',bd:'rgba(255,100,180,0.45)',lb:'COLOAD'};
+  } else if(sh==='EGT') {
+    theme={pc:'#d8e030',bg:'#141e04',hd:'#0c1402',bd:'rgba(200,210,30,0.45)',lb:'EGAT'};
+  } else if(sh==='HKH') {
+    theme={pc:'#40e878',bg:'#081e10',hd:'#041408',bd:'rgba(40,210,100,0.45)',lb:'HKH'};
+  } else if(sh==='GUF') {
+    theme={pc:'#60aaff',bg:'#0e2244',hd:'#0a1836',bd:'rgba(80,150,255,0.45)',lb:'GULF'};
+  } else {
+    // fallback — check supplier for PTT
+    var isPTT = sup.indexOf('PTT')>=0;
+    theme=isPTT
+      ? {pc:'#60d0ff',bg:'#081828',hd:'#041018',bd:'rgba(60,180,255,0.45)',lb:'PTT'}
+      : {pc:'#60aaff',bg:'#0e2244',hd:'#0a1836',bd:'rgba(80,150,255,0.45)',lb:sh||'GULF'};
+  }
+
+  function extractPeople(str) {
+    var known=['JJ','PP','RS','TB','SJ','NS'];
+    var tokens=(str||'').replace(/[\[\](){}&,]/g,' ').split(/\s+/).map(function(t){return t.trim().toUpperCase();});
+    var seen={},res=[];
+    tokens.forEach(function(t){if(known.indexOf(t)>=0&&!seen[t]){seen[t]=1;res.push(t);}});
+    return res;
+  }
+  var sh1p=extractPeople(e.sh1);
+  var sh2p=extractPeople(e.sh2);
+
+  var edObj={vessel:e.vessel,yearly:e.yearly,shipNo:e.shipNo,shipper:e.shipper,
+    supplier:e.supplier,cargoNo:e.cargoNo,vol:e.vol,remark:e.remark,
+    sh1:e.sh1,sh2:e.sh2,loop:e.loop,agent:e.agent,
+    arrDate:e.arrDate?e.arrDate.toISOString():null,
+    depDate:e.depDate?e.depDate.toISOString():null};
+  var ed=JSON.stringify(edObj).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+  var tripNum = '';
+  if(e.shipNo && String(e.shipNo).trim() && String(e.shipNo).trim()!=='0') {
+    tripNum = String(e.shipNo).trim();
+  } else if(e.yearly && String(e.yearly).trim() && String(e.yearly).trim()!=='0') {
+    tripNum = String(e.yearly).trim();
+  }
+
+  var sh1text = (e.sh1||'').trim();
+  var sh2text = (e.sh2||'').trim();
+  var agentVal = (e.agent||'').toString().trim();
+  var rawVol = e.vol;
+  var volNum = NaN;
+  if(rawVol!==null && rawVol!==undefined && rawVol!=='') {
+    var vc = String(rawVol).replace(/,/g,'').replace(/\s/g,'');
+    if(vc!=='') volNum = parseFloat(vc);
+  }
+  var sh1c = sh1text.replace(/[\[\](){}&]/g,'').trim();
+  var sh2c = sh2text.replace(/[\[\](){}&]/g,'').trim();
+
+  // ── DESKTOP rows ─────────────────────────────────────────────────
+  var agentBadge = (agentVal && agentVal!=='0')
+    ? '<span style="background:rgba(245,182,35,0.18);color:#f5c842;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:700;font-family:monospace;border:1px solid rgba(245,182,35,0.4)">'+agentVal+'</span>'
+    : '';
+  var volBadge = (!isNaN(volNum) && volNum>0)
+    ? '<span style="background:rgba(80,160,255,0.12);color:#80c0ff;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600;font-family:monospace;border:1px solid rgba(80,160,255,0.3)">'+volNum.toLocaleString()+'</span>'
+    : '';
+  var dayPill = sh1text ? '<span style="background:#122a18;color:#60ee80;border-radius:3px;padding:2px 5px;font-size:10px;font-weight:800;font-family:monospace;border:1px solid #1e6030;white-space:nowrap">'+sh1text+'</span>' : '<span style="color:#3a5a4a;font-size:9px">—</span>';
+  var nightPill = sh2text ? '<span style="background:#2e1010;color:#ff7070;border-radius:3px;padding:2px 5px;font-size:10px;font-weight:800;font-family:monospace;border:1px solid #602020;white-space:nowrap">'+sh2text+'</span>' : '<span style="color:#5a3a3a;font-size:9px">—</span>';
+
+  var deskHTML = ''
+    +'<div style="display:flex;align-items:center;gap:2px;padding:3px 5px;background:'+theme.hd+';border-bottom:1px solid rgba(255,255,255,0.07)">'
+      +(tripNum?'<span style="color:'+theme.pc+';font-size:9px;font-weight:800;font-family:monospace;flex-shrink:0">'+tripNum+'</span>':'')
+      +'<span style="flex:1;color:#ddeeff;font-size:9px;font-weight:700;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e.vessel+'</span>'
+      +'<span style="flex-shrink:0;background:'+theme.bg+';color:'+theme.pc+';font-size:8px;font-weight:700;font-family:monospace;padding:1px 4px;border-radius:2px;border:1px solid '+theme.bd+'">'+theme.lb+'</span>'
+    +'</div>'
+    +'<div class="vc-detail-row" style="display:flex;gap:4px;padding:3px 5px 2px;border-bottom:1px solid rgba(255,255,255,0.05)">'
+      +'<div style="flex:1;min-width:0"><span style="font-size:8px;color:#3a7050;font-family:monospace">☀</span> '+dayPill+'</div>'
+      +'<div style="flex:1;min-width:0"><span style="font-size:8px;color:#703030;font-family:monospace">🌙</span> '+nightPill+'</div>'
+    +'</div>'
+    +((agentBadge||volBadge)
+      ? '<div class="vc-detail-row" style="padding:2px 5px 3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">'+agentBadge+(volBadge?'<span style="color:#2a4a6a;font-size:9px">|</span>'+volBadge:'')+'</div>'
+      : '');
+
+  // ── MOBILE rows: stacked thin lines ──────────────────────────────
+  // helper: one line
+  function ml(bg, lc, fc, txt) {
+    return '<div style="padding:1px 5px;background:'+bg+';border-left:2px solid '+lc+'">'
+      +'<span style="color:'+fc+';font-size:8px;font-family:monospace;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:1.5">'+txt+'</span>'
+      +'</div>';
+  }
+  var mobHTML = ''
+    // row: trip# + berth badge
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 5px;background:'+theme.hd+'">'
+      +(tripNum?'<span style="color:'+theme.pc+';font-size:8px;font-weight:900;font-family:monospace">'+tripNum+'</span>':'<span></span>')
+      +'<span style="background:'+theme.bg+';color:'+theme.pc+';font-size:7px;font-weight:700;font-family:monospace;padding:1px 3px;border-radius:2px;border:1px solid '+theme.bd+'">'+theme.lb+'</span>'
+    +'</div>'
+    // row: vessel name
+    +ml(theme.bg, theme.bd, '#c8e0ff', e.vessel)
+    // row: agent (only if exists)
+    +(agentVal && agentVal!=='0' ? ml('rgba(50,35,0,0.6)', 'rgba(245,182,35,0.6)', '#f0be30', agentVal) : '')
+    // row: SH1
+    +(sh1c ? ml('#0a1e10', '#1e6030', '#50dd68', sh1c) : '')
+    // row: SH2
+    +(sh2c ? ml('#1c0808', '#5a1818', '#ee5555', sh2c) : '');
+
+  return '<div class="vessel-card" data-ed="'+ed+'" '
+    +'style="background:'+theme.bg+';border-radius:5px;overflow:hidden;'
+    +'border:1px solid '+theme.bd+';margin-top:2px;cursor:pointer;transition:filter 0.15s">'
+    +'<div class="vc-desktop">'+deskHTML+'</div>'
+    +'<div class="vc-mobile">'+mobHTML+'</div>'
+    +'</div>';
+}
+
+
+
+function parseCompanies(str) {
+  const known = ['JJ','PP','RS','TB','SJ','NS'];
+  const tokens = str.replace(/[\[\](){}&,]/g,' ').split(/\s+/).map(t=>t.trim().toUpperCase());
+  return [...new Set(tokens.filter(t=>known.includes(t)))];
+}
+
+// ===== MODAL =====
+function openEvent(jsonStr) {
+  const e = typeof jsonStr==='string'?JSON.parse(jsonStr):jsonStr;
+  document.getElementById('modalTitle').textContent = e.vessel||'รายละเอียดเรือ';
+  const eta = e.arrDate ? fmtTH(new Date(e.arrDate)) : '—';
+  const etd = e.depDate ? fmtTH(new Date(e.depDate)) : '—';
+  const shColor = e.shipper==='GUF'?'var(--accent2)':e.shipper==='HKH'?'var(--gold)':'var(--green2)';
+  document.getElementById('modalBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.07)">
+      <div style="font-size:32px">🚢</div>
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#d8eaff;text-transform:uppercase">${e.vessel}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">
+          Trip <b>${e.shipNo}</b> &nbsp;|&nbsp; ลำดับที่ <b>${e.yearly}</b> &nbsp;|&nbsp;
+          <span style="color:${shColor};font-weight:700">${e.shipper}</span>
+          &nbsp;|&nbsp; ${e.loop||''}
+        </div>
+      </div>
+    </div>
+    <div class="mrow">
+      <div><div class="mf-label">ETA (มาถึง)</div><div class="mf-val" style="color:var(--green2);font-family:var(--mono)">${eta}</div></div>
+      <div><div class="mf-label">ETD (ออกเดิน)</div><div class="mf-val" style="color:var(--gold);font-family:var(--mono)">${etd}</div></div>
+    </div>
+    <div class="mrow" style="margin-top:10px">
+      <div><div class="mf-label">Supplier</div><div class="mf-val">${e.supplier||'—'}</div></div>
+      <div><div class="mf-label">Approx. Volume</div><div class="mf-val" style="font-family:var(--mono);color:var(--accent)">${e.vol?Number(e.vol).toLocaleString()+' m³':'—'}</div></div>
+    </div>
+    <div class="mrow" style="margin-top:10px">
+      <div><div class="mf-label">SH1</div><div class="mf-val" style="font-size:13px">${e.sh1||'—'}</div></div>
+      <div><div class="mf-label">SH2</div><div class="mf-val" style="font-size:13px">${e.sh2||'—'}</div></div>
+    </div>
+    <div style="margin-top:10px"><div class="mf-label">Cargo No.</div><div class="mf-val" style="font-size:12px;font-family:var(--mono);color:var(--text2)">${e.cargoNo||'—'}</div></div>
+    ${e.agent?`<div style="margin-top:10px;display:flex;gap:16px"><div><div class="mf-label">Agent</div><div class="mf-val" style="color:var(--gold);font-family:var(--mono)">${e.agent}</div></div></div>`:''}
+    ${e.remark?`<div class="remark-box"><div class="mf-label" style="margin-bottom:4px">Remark</div><div style="font-size:13px;color:var(--text2)">${e.remark}</div></div>`:''}
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);text-align:right">
+      <button onclick="closeModal()" style="padding:7px 18px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:var(--text);cursor:pointer;font-family:var(--font);font-size:13px">ปิด</button>
+    </div>
+  `;
+  document.getElementById('eventModal').classList.add('open');
+}
+function closeModal(){document.getElementById('eventModal').classList.remove('open')}
+document.getElementById('eventModal').addEventListener('click',function(e){if(e.target===this)closeModal()});
+
+// ===== DROPDOWN =====
+function buildDropdown() {
+  const sel = document.getElementById('vesselSelect');
+  const cur = sel.value;
+  const names = [...new Set(allData.map(d=>d.vessel).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">— ทั้งหมด —</option>' +
+    names.map(n=>`<option value="${n}"${n===cur?' selected':''}>${n}</option>`).join('');
+}
+function onSelectVessel(){
+  document.getElementById('searchInput').value = document.getElementById('vesselSelect').value;
+  filterRender();
+}
+function filterRender(){renderCal()}
+
+// ===== NAVIGATION =====
+function changeMonth(d){curDate=new Date(curDate.getFullYear(),curDate.getMonth()+d,1);renderCal();updateSummaryBar();}
+function goToday(){curDate=new Date();renderCal();updateSummaryBar();}
+function goHome(){curDate=new Date();document.getElementById('searchInput').value='';document.getElementById('vesselSelect').value='';document.getElementById('portFilter').value='';renderCal();updateSummaryBar();}
+
+// ===== CFG =====
+function openCfg(){document.getElementById('cfgModal').classList.add('open')}
+function closeCfg(){document.getElementById('cfgModal').classList.remove('open')}
+document.getElementById('cfgModal').addEventListener('click',function(e){if(e.target===this)closeCfg()});
+async function testConn(){
+  const url=document.getElementById('cfgUrl').value.trim();
+  const auth=document.getElementById('cfgAuth').value.trim();
+  const r=document.getElementById('testRes');
+  r.className='test-res';
+  if(!url){r.textContent='⚠ กรุณากรอก URL';r.className='test-res fail';return}
+  r.textContent='กำลังเชื่อมต่อ...';r.className='test-res ok';
+  try{
+    const h={'Content-Type':'application/json'};if(auth)h['Authorization']=auth;
+    const res=await fetch(url,{method:'POST',headers:h,body:JSON.stringify({action:'ping'})});
+    r.textContent=res.ok?`✓ HTTP ${res.status} — เชื่อมต่อสำเร็จ!`:`⚠ HTTP ${res.status} ${res.statusText}`;
+    r.className=res.ok?'test-res ok':'test-res fail';
+  }catch(e){r.textContent='✕ '+e.message+' (ตรวจสอบ CORS / URL)';r.className='test-res fail'}
+}
+
+// ===== UTILS =====
+function debugData() {
+  if(!allData.length) { toast('ไม่มีข้อมูล — กด Refresh ก่อน','err'); return; }
+  var r = allData[0];
+  var msg = 'Row แรก:\nvessel: '+r.vessel+'\narrDate: '+r.arrDate+'\ndepDate: '+r.depDate+'\nshipper: '+r.shipper+'\nshipNo: '+r.shipNo+'\nsh1: '+r.sh1+'\nagent: '+r.agent+'\nvol: '+r.vol+' (raw type: '+typeof r.vol+')';
+  alert(msg);
+  var withDate = allData.filter(function(d){return d.arrDate&&!isNaN(d.arrDate);}).length;
+  toast('Total: '+allData.length+' rows | มี arrDate: '+withDate+' rows', withDate>0?'ok':'err');
+}
+
+function exportPNG() {
+  var btn = document.querySelector('.export-btn');
+  btn.innerHTML = '⏳ กำลัง Export...';
+  btn.disabled = true;
+
+  var mo = document.getElementById('monthText').textContent;
+  var yr = document.getElementById('yearText').textContent;
+
+  try {
+    // ──── ดึง Calendar element จริง แล้วใช้ html2canvas capture ──────
+    var calWrapper = document.querySelector('.cal-section .cal-wrapper');
+
+    html2canvas(calWrapper, {
+      backgroundColor: '#112240',
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      ignoreElements: function(el) {
+        return el.id === 'loading' || el.classList.contains('modal-bg') || el.classList.contains('cfg-bg');
+      }
+    }).then(function(calCanvas) {
+
+      // ──── สร้าง Canvas สุดท้าย: Title + Calendar ────
+      var PAD = 24;
+      var TITLE_H = 60;
+      var finalW = calCanvas.width;
+      var finalH = TITLE_H + calCanvas.height + PAD;
+
+      var out = document.createElement('canvas');
+      out.width = finalW;
+      out.height = finalH;
+      var ctx = out.getContext('2d');
+
+      // Background
+      ctx.fillStyle = '#0d1b2e';
+      ctx.fillRect(0, 0, finalW, finalH);
+
+      // Title: เดือน + ปี
+      var scale = 2; // เพราะ scale:2 ด้านบน
+      ctx.font = 'bold ' + (28*scale) + 'px "IBM Plex Mono", monospace';
+      ctx.fillStyle = '#00bfff';
+      ctx.fillText(mo, PAD*scale, 36*scale);
+
+      var moWidth = ctx.measureText(mo + ' ').width;
+      ctx.fillStyle = '#e8f0fe';
+      ctx.fillText(yr, PAD*scale + moWidth, 36*scale);
+
+      // Updated tag
+      var updated = document.getElementById('updatedTag').textContent;
+      ctx.font = (11*scale) + 'px "IBM Plex Mono", monospace';
+      ctx.fillStyle = '#5a7a9a';
+      ctx.textAlign = 'right';
+      ctx.fillText(updated, finalW - PAD*scale, 36*scale);
+      ctx.textAlign = 'left';
+
+      // Calendar image
+      ctx.drawImage(calCanvas, 0, TITLE_H * scale);
+
+      // Download
+      var link = document.createElement('a');
+      link.download = 'LMPT2_' + mo + '_' + yr + '.png';
+      link.href = out.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      btn.innerHTML = '📷 Export PNG';
+      btn.disabled = false;
+      toast('Export สำเร็จ! ' + mo + ' ' + yr, 'ok');
+
+    }).catch(function(err) {
+      btn.innerHTML = '📷 Export PNG';
+      btn.disabled = false;
+      toast('Export ไม่สำเร็จ: ' + err.message, 'err');
+      console.error('html2canvas error:', err);
+    });
+
+  } catch(e) {
+    btn.innerHTML = '📷 Export PNG';
+    btn.disabled = false;
+    toast('Export error: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+function fmtTH(d) {
+  if(!d||isNaN(d)) return '—';
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()+543}`;
+}
+function setTime(){
+  const now=new Date();
+  const t=fmtTH(now)+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  document.getElementById('syncTime').textContent=t;
+  document.getElementById('updatedTag').textContent='UPDATED: '+t;
+}
+function toast(msg,type){
+  const w=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;t.textContent=msg;w.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},3500);
+}
+</script>
+</body>
+</html>
